@@ -106,3 +106,50 @@ values
 ('ajuste de inventário', 0, 1),
 ('devolução de cliente', 1, 1),
 ('devolução ao fornecedor', -1, 1);
+
+-- CRUD Controlado
+update atlas.produtos
+set preco = 75000.00
+where idProduto = 1;
+
+-- Testes de integridade
+insert into atlas.transacoes
+(dtTransacao, qtdTransacao, descTransacao, respTransacao, idProduto, idTipoMovimentacao)
+values (now(), 1, 'teste inválido', 'sistema', 999, 1);
+
+start transaction;
+
+delete from atlas.produtos
+where idProduto = 1;
+
+rollback;
+
+-- Transações Validas
+insert into atlas.transacoes
+(dtTransacao, qtdTransacao, descTransacao, respTransacao, idProduto, idTipoMovimentacao)
+values
+(now(), 2, 'compra lote importadora', 'sistema', 1, 1);
+
+insert into atlas.transacoes
+(dtTransacao, qtdTransacao, descTransacao, respTransacao, idProduto, idTipoMovimentacao)
+values
+(now(), 1, 'devolução por arrependimento', 'atendimento', 1, 7);
+
+insert into atlas.transacoes
+(dtTransacao, qtdTransacao, descTransacao, respTransacao, idProduto, idTipoMovimentacao)
+values
+(now(), -1, 'diferença em inventário físico', 'auditoria', 1, 6);
+
+-- Joins
+select
+	t.dtTransacao,
+	p.nomeProduto,
+	c.nomeCategoria,
+	f.nomeFornecedor,
+	tm.descMovimentacao,
+	t.qtdTransacao
+from atlas.transacoes t
+join atlas.produtos p on t.idProduto = p.idProduto
+join atlas.categorias c on p.idCategoria = c.idCategoria
+join atlas.fornecedores f on p.idFornecedor = f.idFornecedor
+join atlas.tipoMovimentacao tm on t.idTipoMovimentacao = tm.idTipoMovimentacao;
