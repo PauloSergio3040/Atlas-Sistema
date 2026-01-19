@@ -49,3 +49,60 @@ create table atlas.transacoes (
 	idProduto int not null,
 	idTipoMovimentacao int not null
 );
+
+-- Contraints e Integridade
+alter table atlas.categorias
+	add constraint uq_categoria_nome unique (nomeCategoria);
+
+alter table atlas.fornecedores
+	add constraint uq_fornecedor_cnpj unique (cnpj);
+
+alter table atlas.tipoMovimentacao
+	add constraint uq_tipomov_desc unique (descMovimentacao);
+
+-- Foreign Keys
+alter table atlas.produtos
+	add constraint fk_produtos_categorias
+	foreign key (idCategoria) references atlas.categorias(idCategoria),
+	add constraint fk_produtos_fornecedores
+	foreign key (idFornecedor) references atlas.fornecedores(idFornecedor);
+
+alter table atlas.transacoes
+	add constraint fk_transacoes_produtos
+	foreign key (idProduto) references atlas.produtos(idProduto),
+	add constraint fk_transacoes_tipomov
+	foreign key (idTipoMovimentacao) references atlas.tipoMovimentacao(idTipoMovimentacao);
+
+-- Dados Iniciais
+
+-- Categorias
+insert into atlas.categorias (nomeCategoria, descricao)
+values
+('carro', 'veículo automotor de passeio'),
+('moto', 'veículo automotor de 2 rodas');
+
+-- Fornecedores
+insert into atlas.fornecedores
+(nomeFornecedor, cnpj, telefone, email, logradouro, numeroImovel, complemento, bairro, municipio, estado, cep)
+values
+('importadora s.a.', '68976091000249', '1133728888', 'bmwbrasil@gmail.com',
+ 'rua colômbia', '320', '', 'jardim paulista', 'são paulo', 'sp', '01402000');
+
+-- Produtos
+insert into atlas.produtos
+(nomeProduto, descricao, preco, quantidadeEstoque, idCategoria, idFornecedor)
+values
+('bmw 325 e36', 'sedã esportivo dos anos 90, tração traseira e motor seis em linha', 70000.00, 5, 1, 1);
+
+-- Tipos de Movimentação
+insert into atlas.tipoMovimentacao
+(descMovimentacao, operacaoEstoque, sttsMovimentacao)
+values
+('entrada', 1, 1),
+('saída', -1, 1),
+('entrada não faturada', 1, 1),
+('saída não faturada', -1, 1),
+('troca', 0, 1),
+('ajuste de inventário', 0, 1),
+('devolução de cliente', 1, 1),
+('devolução ao fornecedor', -1, 1);
