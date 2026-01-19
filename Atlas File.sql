@@ -153,3 +153,34 @@ join atlas.produtos p on t.idProduto = p.idProduto
 join atlas.categorias c on p.idCategoria = c.idCategoria
 join atlas.fornecedores f on p.idFornecedor = f.idFornecedor
 join atlas.tipoMovimentacao tm on t.idTipoMovimentacao = tm.idTipoMovimentacao;
+
+-- Indices
+create index idx_produtos_categoria on atlas.produtos (idCategoria);
+create index idx_produtos_fornecedor on atlas.produtos (idFornecedor);
+
+create index idx_transacoes_produto on atlas.transacoes (idProduto);
+create index idx_transacoes_tipomov on atlas.transacoes (idTipoMovimentacao);
+
+create index idx_transacoes_data on atlas.transacoes (dtTransacao);
+
+-- Auditoria
+select p.idProduto, p.nomeProduto
+from atlas.produtos p
+left join atlas.transacoes t on p.idProduto = t.idProduto
+where t.idTransacao is null;
+
+select t.idTransacao, tm.descMovimentacao
+from atlas.transacoes t
+join atlas.tipoMovimentacao tm on t.idTipoMovimentacao = tm.idTipoMovimentacao
+where tm.sttsMovimentacao <> 1;
+
+select
+	p.idProduto,
+	p.nomeProduto,
+	p.quantidadeEstoque as estoque_atual,
+	sum(t.qtdTransacao * tm.operacaoEstoque) as estoque_teorico
+from atlas.produtos p
+join atlas.transacoes t on p.idProduto = t.idProduto
+join atlas.tipoMovimentacao tm on t.idTipoMovimentacao = tm.idTipoMovimentacao
+group by p.idProduto, p.nomeProduto, p.quantidadeEstoque;
+
