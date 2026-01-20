@@ -190,4 +190,4 @@ A aplicação é stateless, permitindo escalabilidade horizontal e reinicializa�
 
 ## 👤 Autor
 
-Projeto desenvolvido como estudo avançado de modelagem, arquitetura de bancos de dados e integração full stack, com foco em boas práticas de engenharia de software, backend e dados.
+Projeto desenvolvido sem uso de IA para códigos diretos, apenas revisão e filtragem de documentaçòes. foi abordado o estudo avançado de modelagem, arquitetura de bancos de dados e integração full stack, com foco em boas práticas de engenharia de software, backend e dados.
