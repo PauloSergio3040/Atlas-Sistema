@@ -1,199 +1,193 @@
-📦 Atlas — Sistema de Controle de Estoque
+# Projeto Atlas — Controle de Estoque
 
-Planejar. Construir. Validar. Operar.
-Nada entra no estoque sem regra. Nada sai sem rastreio.
+O **Projeto Atlas** é um sistema de banco de dados relacional para controle de estoque, movimentações e auditoria, desenvolvido em MySQL com foco em **integridade, rastreabilidade e regras de negócio no nível do banco**.
 
-📌 Visão Geral
+O projeto evolui de um modelo CRUD tradicional para uma arquitetura orientada a histórico, onde o estoque é sempre consequência das movimentações registradas.
 
-O Atlas é um projeto de banco de dados relacional desenvolvido em MySQL, focado em controle de estoque com integridade, rastreabilidade e coerência de negócio.
+---
 
-O objetivo do projeto não é apenas “funcionar”, mas resistir:
+## 🎯 Objetivos do Projeto
 
-- a dados inválidos
+* Garantir **consistência de estoque** independentemente do cliente que consome o banco
+* Centralizar **regras de negócio no banco de dados**
+* Permitir **auditoria completa** de movimentações
+* Fornecer **camada de leitura padronizada** para APIs e BI
+* Servir como projeto didático e portfólio em SQL avançado
 
-- ao crescimento do sistema
+---
 
-- a erros da aplicação
+## 🧱 Arquitetura Geral
 
-- a decisões ruins no frontend ou backend
+O projeto é dividido logicamente em quatro camadas:
 
-No Atlas, o banco impõe regras.
-A aplicação apenas as respeita.
+1. **Modelo Transacional**
+   Tabelas responsáveis por dados mestres e movimentações (produtos, transações, tipos de movimentação).
 
-🎯 Objetivos do Projeto
+2. **Regras de Negócio (Triggers)**
+   Garantem integridade, bloqueios e atualização automática de estoque.
 
-- Modelar um sistema de estoque realista e auditável
+3. **Camada Analítica (Views)**
+   Consolida dados para leitura, relatórios e dashboards.
 
-- Garantir integridade referencial com chaves estrangeiras
+4. **Interface de Consumo (Procedures)**
+   Fornece operações prontas para APIs REST ou ferramentas de BI.
 
-- Aplicar unicidade baseada em regras de negócio
+---
 
-- Separar claramente:
+## 📦 Estrutura de Tabelas
 
-- estrutura do banco
+### Tabelas Principais
 
-- dados iniciais
+* **categorias** — Classificação dos produtos
+* **fornecedores** — Origem dos produtos
+* **produtos** — Cadastro e estoque físico atual
+* **tipoMovimentacao** — Define impacto no estoque (entrada, saída, neutra)
+* **transacoes** — Histórico imutável de movimentações
 
-- testes de integridade
+### Tabelas de Controle
 
-- consultas relacionais
+* **periodoEstoque** — Controle de meses abertos/fechados
+* **auditoria** — Registro de ações sensíveis no sistema
 
-- Preparar o banco para automações futuras (triggers e procedures)
+---
 
-- Praticar SQL como engenharia, não como tentativa-e-erro.
+## 🔐 Regras de Negócio Implementadas
 
-🧱 Estrutura Atual do Banco
+* Produto **não nasce com estoque**
+* Estoque inicial é registrado via movimentação específica
+* Estoque é atualizado automaticamente após cada transação
+* Estoque negativo é bloqueado antes da gravação
+* Transações **não podem ser excluídas**, apenas corrigidas
+* Correções ajustam o estoque pela diferença (não duplicam impacto)
+* Transações em períodos fechados são bloqueadas
+* Toda transação é auditada automaticamente
 
-Tabelas principais
+Essas regras tornam o banco resiliente a erros de aplicação ou uso indevido.
 
-- categorias
-Classificação lógica dos produtos
+---
 
-- fornecedores
-Origem dos itens (CNPJ único, dados completos)
+## ⚙️ Triggers
 
-- produtos
-Entidade central do estoque
+Triggers são usadas para:
 
-- tipoMovimentacao
-Define regras semânticas de entrada, saída e ajustes
+* Bloquear estoque negativo (`BEFORE INSERT`)
+* Atualizar estoque automaticamente (`AFTER INSERT`)
+* Ajustar estoque em correções (`AFTER UPDATE`)
+* Impedir exclusão de transações (`BEFORE DELETE`)
+* Bloquear lançamentos em período fechado
+* Registrar auditoria de operações
 
-- transacoes
-Histórico auditável de todas as movimentações
+---
 
-🔒 Decisões de Modelagem
+## 👁️ Views (Camada de Leitura)
 
-Estoque e transações usam decimal(10,2)
-→ suporte a quantidades fracionadas
+As views padronizam consultas e evitam joins repetitivos:
 
-Chaves estrangeiras garantem rastreabilidade total
+* **vw_estoque_atual** — Estoque consolidado por produto
+* **vw_historico_estoque** — Histórico legível de movimentações
+* **vw_giro_estoque** — Giro estimado por produto
+* **vw_produtos_parados** — Produtos sem saída recente
+* **vw_cobertura_estoque** — Cobertura estimada em dias
+* **vw_base_curva_abc** — Base financeira da curva ABC
+* **vw_curva_abc** — Classificação ABC automática
 
-unique aplicado somente onde duplicação quebra significado
+---
 
-Histórico nunca é sobrescrito
+## 📊 Relatórios e Procedures
 
-Nenhuma regra crítica fica implícita na aplicação
+Procedures prontas para consumo externo:
 
-🧪 Estado Atual do Projeto
+* **sp_relatorio_estoque** — Visão consolidada de estoque e giro
+* **sp_historico_produto_periodo** — Histórico por produto e período
+* **sp_relatorio_curva_abc** — Curva ABC pronta para BI
+* **sp_simula_movimentacoes** — Geração de carga de teste
 
-✅ Concluído
+Essas procedures permitem uso direto em APIs REST ou dashboards.
 
-- Estrutura completa do banco
+---
 
-- Tipos de dados consolidados
+## 🧪 Testes e Validações
 
-- Chaves primárias e estrangeiras
+O script inclui testes para:
 
-- Regras de unicidade
+* Unicidade de categorias e fornecedores
+* Integridade referencial (FKs)
+* Bloqueio de estoque negativo
+* Atualização automática de estoque
+* Correção de transações
+* Bloqueio de exclusão
 
-- Dados iniciais para testes
+Cada falha esperada é documentada com o erro retornado pelo MySQL.
 
-- CRUD básico
+---
 
-- Testes com transaction, commit e rollback
+## 🚀 Tecnologias Utilizadas
 
-- Testes de falha por integridade referencial
+### Banco de Dados
 
-- Consultas com JOIN simples e múltiplos
+* MySQL 8+
+* SQL ANSI
+* Triggers, Views e Stored Procedures
+* Window Functions
 
-- Organização dos scripts por responsabilidade
+### Backend
 
-🔄 Em andamento
+* Node.js
+* TypeScript
+* API REST
+* Acesso ao banco via Views e Stored Procedures
 
-Consolidação de consultas relacionais
+### Frontend
 
-Validação semântica do estoque vs transações
+* React
+* TypeScript
+* Consumo de API REST
 
-📋 Próximos Passos (Banco de Dados)
+### Infraestrutura
 
-ETAPA 6 — Regras Avançadas de Integridade e Performance
+* Docker
+* AWS ECS (Fargate)
+* AWS RDS (MySQL)
+* AWS Free Tier
 
-- Índices baseados em consultas reais
+---
 
-- Testes adicionais de inserções inválidas
+## 📌 Observações de Design
 
-- Validação global de consistência
+* O **histórico é a fonte da verdade**
+* O estoque físico é sempre reconciliável com o estoque teórico
+* Views representam a camada oficial de leitura
+* O banco foi projetado para reduzir lógica na aplicação
 
-ETAPA 7 — Triggers e Procedures
+---
 
-- Planejamento das regras automáticas
+## 📈 Próximos Passos
 
-- Trigger de atualização de estoque
+* Implementar backend em Node.js + TypeScript
+* Criar frontend em React + TypeScript
+* Containerizar backend e frontend com Docker
+* Deploy em AWS ECS (Fargate)
+* Utilizar RDS MySQL como banco gerenciado
+* Expor API REST para consumo do frontend e BI
+* Monitoramento básico via CloudWatch
 
-- Procedures para relatórios
+---
 
-- Documentação das regras de negócio
+## 🏗️ Arquitetura de Deploy
 
-ETAPA 8 — Consultas Avançadas e KPIs
+O projeto será implantado em ambiente cloud utilizando contêineres Docker.
 
-- Agregações
+Arquitetura prevista:
 
-- CASE
+* **Frontend**: React + TypeScript, servido via container (Nginx)
+* **Backend**: Node.js + TypeScript, exposto via API REST
+* **Banco de Dados**: MySQL em AWS RDS
+* **Orquestração**: AWS ECS (Fargate)
 
-- Subconsultas
+A aplicação é stateless, permitindo escalabilidade horizontal e reinicialização segura dos containers.
 
-- Window Functions
+---
 
-- KPIs de estoque (giro, cobertura, curva ABC)
+## 👤 Autor
 
-ETAPA 9 — Segurança e Administração
-
-- Usuários e permissões
-
-- Estratégia de backup
-
-- Restauração
-
-- Monitoramento
-
-ETAPA 10 — Finalização
-
-- Dicionário de dados
-
-- Views
-
-- Validação com dados próximos do real
-
-🚀 Visão de Futuro — Aplicação Completa
-
-O Atlas será evoluído para uma aplicação web completa, desacoplada e escalável.
-
-Backend:
-
-- Node.js + TypeScript
-
-- Arquitetura em camadas
-
-- API REST
-
-- Autenticação e autorização
-
-- Docker
-
-- Deploy via AWS ECS
-
-Frontend:
-
-- React + TypeScript
-
-- Interface focada em leitura clara de dados
-
-- Dashboards de estoque
-
-- Relatórios gerenciais
-
-- Infraestrutura
-
-- Containers Docker
-
-- AWS ECS
-
-- Separação clara entre banco, backend e frontend
-
-🧠 Filosofia do Projeto
-
-Integridade > conveniência
-Semântica antes de sintaxe
-Banco como guardião das regras
-Código explica decisões
-Nada mágico, tudo rastreável
+Projeto desenvolvido como estudo avançado de modelagem, arquitetura de bancos de dados e integração full stack, com foco em boas práticas de engenharia de software, backend e dados.
